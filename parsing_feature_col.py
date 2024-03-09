@@ -80,7 +80,7 @@ for sp in species_list:
     for index, row in gdf.iterrows():
         if sp == row['feature_collection_name']:
             sp_count = count_species(sp, gdf)
-            gdf.loc[index, 'species_count'] = sp_count
+            gdf.loc[index, 'species_count'] = str(sp_count)
 
 
 gdf.to_file('withID.geojson', driver='GeoJSON')

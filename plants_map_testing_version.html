@@ -151,11 +151,6 @@
             }
         }
 
-        $.getJSON('https://raw.githubusercontent.com/cnorton27/Squamish_plants_map/main/withID.geojson',
-            function (data) {
-                // Success callback function
-                let plant_features = data
-            });
 
 
         ////// map /////////////////////////////////////////////////////////////
@@ -208,7 +203,7 @@
             });
 
             map.addLayer({
-                id: 'highlighted-plants2',
+                id: 'highlighted-plants',
                 type: 'circle',
                 source: 'plants_data',
                 paint: {
@@ -386,7 +381,7 @@
 
                 const current_species = feature.properties.feature_collection_name
 
-                const relatedplants = map.querySourceFeatures('highlighted-plants2', {  //'squam-plants'
+                const relatedplants = map.querySourceFeatures('highlighted-plants', {  //'squam-plants'
                     sourceLayer: 'original',
                     filter: ['in', 'feature_collection_name', current_species]
                 });
@@ -395,46 +390,19 @@
 
 
 
-                // Initialize a counter
-                let count = 0;
-                let species_count; // Declare species_count variable outside the loop
-
-                // Fetch the GeoJSON data
-                fetch('https://raw.githubusercontent.com/cnorton27/Squamish_plants_map/main/withID.geojson')
-                    .then(response => response.json()) // Parse the JSON response
-                    .then(data => {
-                        // Assign the GeoJSON data to the variable
-                        const plant_features = data;
-                        console.log('Feature collection:', plant_features);
-
-                        // Iterate over the features and count those with the same property value
-                        for (let i = 0; i < plant_features.length; i++) {
-                            const feature2 = plant_features[i];
-                            if (feature2.properties[feature_collection_name] === current_species) {
-                                count++;
-                            }
-                        }
-
-                        species_count = count; // Assign count to species_count
-                        console.log('Species count:', species_count); // Output the final count
-                    })
-                    .catch(error => {
-                        console.error('Error fetching GeoJSON data:', error);
-                    });
-
-
 
                 const title = document.createElement('strong');
                 title.textContent =
                     feature.properties.feature_collection_name +
                     ' (' +
-                    species_count +
+                    feature.properties.species_count +
                     //uniqueplants.length +
                     ' found)';
 
                 const ID = document.createElement('div');
                 ID.textContent =
-                    'Total plants:'
+                    'Total plants:' +
+                    feature.properties.species_count.toString();
 
                 overlay.innerHTML = '';
                 overlay.style.display = 'block';
@@ -443,7 +411,7 @@
                 overlay.appendChild(ID);
 
 
-                map.setFilter('highlighted-plants2', [
+                map.setFilter('highlighted-plants', [
                     'in',
                     'feature_collection_name',
                     feature.properties.feature_collection_name
@@ -462,7 +430,7 @@
             map.on('mouseleave', 'squam-plants', () => {
                 map.getCanvas().style.cursor = '';
                 popup3.remove();
-                map.setFilter('highlighted-plants2', ['in', 'feature_collection_name', '']);
+                map.setFilter('highlighted-plants', ['in', 'feature_collection_name', '']);
                 overlay.style.display = 'none';
             });
         })

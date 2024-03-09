@@ -6,8 +6,6 @@ import numpy as np
 gdf = gpd.read_file(r'C:\Users\ciara\OneDrive\Documents\GitHub\Squamish_plants_map\withID.geojson')
 
 
-
-
 # counts species of given name
 def species_count(species, data):
     count = 0
