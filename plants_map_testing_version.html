@@ -199,7 +199,7 @@
 
             map.addSource('plants_data', {
                 type: 'geojson',
-                data: 'https://raw.githubusercontent.com/cnorton27/Exploratory-Lab-1/main/withID.geojson' // Replace with the URL of your GeoJSON data
+                data: 'https://raw.githubusercontent.com/cnorton27/Squamish_plants_map/main/withID.geojson' // Replace with the URL of your GeoJSON data
             });
 
             map.addLayer({
@@ -348,7 +348,6 @@
 
 
         ////////////////search similar features through mouse-over/////////////////////////////////////////////////////////////////////////
-        // not functional, needs debugging
 
         map.on('load', () => {
             const overlay = document.getElementById('map-overlay');
@@ -393,16 +392,12 @@
 
                 const title = document.createElement('strong');
                 title.textContent =
-                    feature.properties.feature_collection_name +
-                    ' (' +
-                    feature.properties.species_count +
-                    //uniqueplants.length +
-                    ' found)';
+                    feature.properties.feature_collection_name
 
                 const ID = document.createElement('div');
                 ID.textContent =
-                    'Total plants:' +
-                    feature.properties.species_count.toString();
+                    'Total plants:' + " " +
+                    feature.properties.species_count
 
                 overlay.innerHTML = '';
                 overlay.style.display = 'block';
