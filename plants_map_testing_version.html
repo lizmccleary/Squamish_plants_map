@@ -11,6 +11,7 @@
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.1/mapbox-gl.css' rel='stylesheet' />
     <!-- Turf code. -->
     <script src="https://npmcdn.com/@turf/turf/turf.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 
 
     <style>
@@ -36,7 +37,7 @@
             height: 0;
         }
 
-        .popup {
+        .popup_title {
             position: absolute;
             top: 40%;
             bottom: 60%;
@@ -50,7 +51,7 @@
             z-index: 1000;
         }
 
-        .popup img {
+        .popup_title img {
             width: 100%;
             /* Ensure image fills the container width */
             height: auto;
@@ -59,7 +60,7 @@
             /* Prevents extra space below image */
         }
 
-        .popup .close {
+        .popup_title .close {
             position: absolute;
             top: 5px;
             right: 10px;
@@ -128,9 +129,9 @@
     <div id='map'></div>
 
 
-    <div id="popup" class="popup">
+    <div id="popup_title" class="popup_title">
         <span class="close" onclick="togglePopup()">&times;</span>
-        <img id="popupImg" src="webmap-indigenous-plants-01.png" alt="Popup Image">
+        <img id="popup_titleImg" src="webmap-indigenous-plants-01.png" alt="Popup Image">
     </div>
 
     <button class="button" onclick="togglePopup()">Toggle Image</button>
@@ -142,13 +143,19 @@
 
         // Function to toggle the visibility of the popup
         function togglePopup() {
-            var popup = document.getElementById('popup');
-            if (popup.style.display === 'none' || popup.style.display === '') {
-                popup.style.display = 'block';
+            var popup_title = document.getElementById('popup_title');
+            if (popup_title.style.display === 'none' || popup_title.style.display === '') {
+                popup_title.style.display = 'block';
             } else {
-                popup.style.display = 'none';
+                popup_title.style.display = 'none';
             }
         }
+
+        $.getJSON('https://raw.githubusercontent.com/cnorton27/Squamish_plants_map/main/withID.geojson',
+            function (data) {
+                // Success callback function
+                let plant_features = data
+            });
 
 
         ////// map /////////////////////////////////////////////////////////////
@@ -205,12 +212,13 @@
                 type: 'circle',
                 source: 'plants_data',
                 paint: {
-                    'circle-color': '#cefad0',
+                    'circle-color': '#AFFF00',
                     'circle-radius': 5,
                     'circle-stroke-width': .3,
                     'circle-stroke-color': '#fff',
                     'circle-opacity': 1
                 },
+                //'filter' : ['==', ['get', 'feature_collection_name'], current_species]
                 'filter': ['in', 'feature_collection_name', '']
             });
 
@@ -227,19 +235,6 @@
             },
             );
 
-            map.addLayer({
-                id: 'highlighted-plants',
-                type: 'circle',
-                source: 'plants_data',
-                paint: {
-                    'circle-color': '#cefad0',
-                    'circle-radius': 5,
-                    'circle-stroke-width': .3,
-                    'circle-stroke-color': '#fff',
-                    'circle-opacity': 1
-                },
-                'filter': ['in', 'ID', '']
-            });
 
             canvas.addEventListener('mousedown', mouseDown, true);
 
@@ -357,90 +352,120 @@
         });
 
 
-
         ////////////////search similar features through mouse-over/////////////////////////////////////////////////////////////////////////
         // not functional, needs debugging
 
+        map.on('load', () => {
+            const overlay = document.getElementById('map-overlay');
 
-        const overlay = document.getElementById('map-overlay');
-
-        // Create a popup, but don't add it to the map yet.
-        const popup3 = new mapboxgl.Popup({
-            closeButton: false
-        });
-
-        // function makes sure feature is not a duplicate caused by loading multiple map tiles at once
-        function getUniqueFeatures(features, comparatorProperty) {
-            const uniqueIds = new Set();
-            const uniqueFeatures = [];
-            for (const feature2 of features) {
-                const id = feature2.properties[comparatorProperty];
-                if (!uniqueIds.has(id)) {
-                    uniqueIds.add(id);
-                    uniqueFeatures.push(feature2);
-                }
-            }
-            return uniqueFeatures;
-        }
-
-
-        map.on('mousemove', 'squam-plants', (e) => {
-
-            // feature2 = plant that mouse is hovering over
-            const feature2 = e.features[0];
-
-            const relatedplants = map.querySourceFeatures('squam-plants', {
-                sourceLayer: 'original',
-                filter: ['in', 'feature_collection_name', feature2.properties.feature_collection_name]
+            // Create a popup, but don't add it to the map yet.
+            const popup3 = new mapboxgl.Popup({
+                closeButton: false
             });
 
-            const uniqueplants = getUniqueFeatures(relatedplants, 'ID');
+            // function makes sure feature is not a duplicate caused by loading multiple map tiles at once
+            function getUniqueFeatures(features, comparatorProperty) {
+                const uniqueIds = new Set();
+                const uniqueFeatures = [];
+                for (const feature of features) {
+                    const id = feature.properties[comparatorProperty];
+                    if (!uniqueIds.has(id)) {
+                        uniqueIds.add(id);
+                        uniqueFeatures.push(feature);
+                    }
+                }
+                return uniqueFeatures;
+
+            }
+
+
+            map.on('mousemove', 'squam-plants', (e) => {
+
+                // feature = plant that mouse is hovering over
+                const feature = e.features[0];
+
+                const current_species = feature.properties.feature_collection_name
+
+                const relatedplants = map.querySourceFeatures('highlighted-plants2', {  //'squam-plants'
+                    sourceLayer: 'original',
+                    filter: ['in', 'feature_collection_name', current_species]
+                });
+
+                const uniqueplants = getUniqueFeatures(relatedplants, 'ID');
 
 
 
+                // Initialize a counter
+                let count = 0;
+                let species_count; // Declare species_count variable outside the loop
 
-            const title = document.createElement('strong');
-            title.textContent =
-                feature2.properties.feature_collection_name +
-                ' (' +
-                relatedplants.length +
-                ' found)';
+                // Fetch the GeoJSON data
+                fetch('https://raw.githubusercontent.com/cnorton27/Squamish_plants_map/main/withID.geojson')
+                    .then(response => response.json()) // Parse the JSON response
+                    .then(data => {
+                        // Assign the GeoJSON data to the variable
+                        const plant_features = data;
+                        console.log('Feature collection:', plant_features);
 
-            const ID = document.createElement('div');
-            ID.textContent =
-                'Total plants:'
+                        // Iterate over the features and count those with the same property value
+                        for (let i = 0; i < plant_features.length; i++) {
+                            const feature2 = plant_features[i];
+                            if (feature2.properties[feature_collection_name] === current_species) {
+                                count++;
+                            }
+                        }
 
-            overlay.innerHTML = '';
-            overlay.style.display = 'block';
+                        species_count = count; // Assign count to species_count
+                        console.log('Species count:', species_count); // Output the final count
+                    })
+                    .catch(error => {
+                        console.error('Error fetching GeoJSON data:', error);
+                    });
 
-            overlay.appendChild(title);
-            overlay.appendChild(population);
 
 
-            // Add features with the same county name
-            // to the highlighted layer.
-            map.setFilter('highlighted-plants2',
-                ['in',
+                const title = document.createElement('strong');
+                title.textContent =
+                    feature.properties.feature_collection_name +
+                    ' (' +
+                    species_count +
+                    //uniqueplants.length +
+                    ' found)';
+
+                const ID = document.createElement('div');
+                ID.textContent =
+                    'Total plants:'
+
+                overlay.innerHTML = '';
+                overlay.style.display = 'block';
+
+                overlay.appendChild(title);
+                overlay.appendChild(ID);
+
+
+                map.setFilter('highlighted-plants2', [
+                    'in',
                     'feature_collection_name',
-                    ''  //feature2.properties.feature_collection_name
+                    feature.properties.feature_collection_name
                 ]);
 
 
-            // Display a popup
-            popup3
-                .setLngLat(e.lngLat)
-                .setText(feature2.properties.feature_collection_name)
-                .addTo(map);
-        });
+                // Display a popup
+              //  popup3
+           //         .setLngLat(e.lngLat)
+             //       .setText(feature.properties.feature_collection_name)
+               //     .addTo(map);
+            });
 
 
-        map.on('mouseleave', 'squam-plants', () => {
-            map.getCanvas().style.cursor = '';
-            popup3.remove();
-            map.setFilter('highlighted-plants2', ['in', 'feature_collection_name', '']);
-            overlay.style.display = 'none';
-        });
 
+            map.on('mouseleave', 'squam-plants', () => {
+                map.getCanvas().style.cursor = '';
+                popup3.remove();
+                map.setFilter('highlighted-plants2', ['in', 'feature_collection_name', '']);
+                overlay.style.display = 'none';
+            });
+        })
 
 
     </script>
