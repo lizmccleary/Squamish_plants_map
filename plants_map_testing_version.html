@@ -397,20 +397,6 @@
             const uniqueplants = getUniqueFeatures(relatedplants, 'ID');
 
 
-            // Define the property you want to filter by
-            var filterProperty = 'property_name';
-            var filterValue = 'property_value';
-
-            // Parse GeoJSON data
-            var features = plants_.features;
-
-            // Filter and count features
-            var featureCount = features.filter(function (feature) {
-                return feature.properties[filterProperty] === filterValue;
-            }).length;
-
-
-
 
 
             const title = document.createElement('strong');
