@@ -431,6 +431,64 @@
         })
 
 
+
+               /////////////buffer////////////////////
+
+               map.addSource('plants_data', {
+            map.addSource('trails', {
+                type: 'geojson',
+                data: 'https://raw.githubusercontent.com/cnorton27/Exploratory-Lab-1/main/withID.geojson' // Replace with the URL of your GeoJSON data
+                data: 'https://raw.githubusercontent.com/cnorton27/Exploratory-Lab-1/main/LineStrings.geojson' // Replace with the URL of your GeoJSON data
+            });
+
+
+            const buffered = turf.buffer(trails, 0.05, { units: 'miles' });
+
+            map.addLayer({
+                id: 'squam-plants',
+                type: 'circle',
+                source: 'plants_data',
+                id: 'trailss',
+                type: 'line',
+                source: 'trails',
+                layout: {
+                    'line-cap': 'round',
+                    'line-join': 'round'
+                },
+                paint: {
+                    'circle-color': '#11b4da',
+                    'circle-radius': 6,
+                    'circle-opacity': 0
+                    'line-color': '#FF0000',
+                    'line-width': 5
+                }
+            },
+            );
+
+            map.addLayer({
+                id: 'highlighted-plants',
+                type: 'circle',
+                source: 'plants_data',
+                paint: {
+                    'circle-color': '#cefad0',
+                    'circle-radius': 5,
+                    'circle-stroke-width': .3,
+                    'circle-stroke-color': '#fff',
+                    'circle-opacity': 1
+                },
+                'filter': ['in', 'ID', '']
+            });
+        })
+
+
+            // Set `true` to dispatch the event before other functions
+            // call it. This is necessary for disabling the default map
+            // dragging behaviour.
+            canvas.addEventListener('mousedown', mouseDown, true);
+/////////////////////////////////
+
+
+
     </script>
 </body>
 
